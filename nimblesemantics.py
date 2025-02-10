@@ -101,6 +101,7 @@ class InferTypesAndCheckConstraints(NimbleListener):
     # --------------------------------------------------------
 
     def exitVarDec(self, ctx: NimbleParser.VarDecContext):
+
         if ctx.TYPE().getText() == "Int":
             self.current_scope.define(ctx.ID().getText(), PrimitiveType.Int)
         elif ctx.TYPE().getText() == "String":
@@ -116,7 +117,7 @@ class InferTypesAndCheckConstraints(NimbleListener):
                 self.error_log.add(ctx, Category.INVALID_NEGATION,
                                        f"cannot assign {ctx.expr().getText()} to type {ctx.TYPE().getText()}")
                 self.type_of[ctx] = PrimitiveType.ERROR
-
+        #add resolve locally
 
 
     # --------------------------------------------------------
@@ -124,6 +125,8 @@ class InferTypesAndCheckConstraints(NimbleListener):
     # --------------------------------------------------------
 
     def exitAssignment(self, ctx: NimbleParser.AssignmentContext):
+        #is x declared
+        #is x declared as a variable
         pass
 
     def exitWhile(self, ctx: NimbleParser.WhileContext):
@@ -198,7 +201,17 @@ class InferTypesAndCheckConstraints(NimbleListener):
                                                                 F"{ctx.expr(0).getText()}, {ctx.expr(1).getText()} and operation: {ctx.op.text}")
 
     def exitVariable(self, ctx: NimbleParser.VariableContext):
-        pass
+        #resolve on scope with variable name.
+        #check the current scope for the variable symbol
+        if not self.current_scope.resolve_locally(ctx.getText()):
+            self.type_of[ctx] = PrimitiveType.ERROR
+            self.error_log.add(ctx, Category.UNDEFINED_NAME, F"{ctx.getText()} is undefined")
+            return
+
+        #Find the type of the variable
+        self.type_of[ctx] = self.current_scope.resolve(ctx.getText()).PrimitiveType
+
+
 
     def exitStringLiteral(self, ctx: NimbleParser.StringLiteralContext):
         self.type_of[ctx] = PrimitiveType.String

@@ -47,7 +47,7 @@ VALID_EXPRESSIONS = [
     #parens
     ('(5)',PrimitiveType.Int),
     ('(true)',PrimitiveType.Bool),
-    #('(3+5)',PrimitiveType.Bool),
+    ('(3+5)',PrimitiveType.Int),
 
     #addsub
     ('5+3',PrimitiveType.Int),
@@ -76,10 +76,17 @@ INVALID_EXPRESSIONS = [
 
     # muldiv
     ('true*3', Category.INVALID_BINARY_OP),
-    ('"haggis"/5', Category.INVALID_BINARY_OP)
+    ('"haggis"/5', Category.INVALID_BINARY_OP),
 
+    # variable
+    ('x', Category.UNDEFINED_NAME)
 ]
 
+VALID_STATEMENTS = [
+
+    # VarDec
+    ('varx:Int=5', PrimitiveType.Int),
+]
 
 def print_debug_info(source, indexed_types, error_log):
     """
@@ -126,16 +133,30 @@ class TypeTests(unittest.TestCase):
                 self.assertEqual(PrimitiveType.ERROR, indexed_types[1][expression])
                 self.assertTrue(error_log.includes_exactly(expected_category, 1, expression))
 
-    # def test_simple_var_dec(self):
     #     """
     #     This is an example of a slightly more complicated test. When run with the
     #     provided code it will fail, since variables aren't yet handled.
     #
     #     TODO: Make this test case pass (eventually; other things to do first)
     #     """
-    #     error_log, global_scope, indexed_types = do_semantic_analysis('var x : Int', 'script')
-    #     self.assertEqual(0, error_log.total_entries())
-    #     main_scope = global_scope.child_scope_named('$main')
-    #     symbol = main_scope.resolve('x')
-    #     self.assertIsNotNone(symbol, 'variable x not defined')
-    #     self.assertEqual(PrimitiveType.Int, symbol.type)
+    def test_simple_var_dec(self):
+        #for statement, expected_type in VALID_STATEMENTS:
+        error_log, global_scope, indexed_types = do_semantic_analysis('var x : Int', 'script')
+        self.assertEqual(0, error_log.total_entries())
+        main_scope = global_scope.child_scope_named('$main')
+        symbol = main_scope.resolve('x')
+        self.assertIsNotNone(symbol, 'variable x not defined')
+        self.assertEqual(PrimitiveType.Int, symbol.type)
+
+    def test_simple_var_calling(self):
+        #Declare variable
+        # call variable#
+        #for statement, expected_type in VALID_STATEMENTS:
+        error_log, global_scope, indexed_types = do_semantic_analysis('var x : Int = 5', 'script', True)
+        self.assertEqual(0, error_log.total_entries())
+        main_scope = global_scope.child_scope_named('$main')
+        symbol = main_scope.resolve('x')
+        self.assertIsNotNone(symbol, 'variable x not defined')
+        self.assertEqual(PrimitiveType.Int, symbol.type)
+
+        #call
